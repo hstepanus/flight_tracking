@@ -49,9 +49,9 @@ app.get('/flights/:airport_code', async (req, res) => {
     const json = await fetch_response.json();
 
     console.log(json);
-    res.json(json);  // ✅ send response to client before runQueries
+    res.json(json);  //  send response to client before runQueries
 
-    // ✅ runQueries after response to avoid header conflict
+    //  runQueries after response to avoid header conflict
     runQueries(json).catch(err => {
       console.error(scriptName + " Error in runQueries:", err.stack);
     });
