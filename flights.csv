@@ -1,0 +1,2 @@
+id,time_stamp,reg_number,alt,dir,speed,lat,lng,dep_iata,flight_icao,status
+1,07/26/2025 18:08:29,N12345,30000,180,500,38.8951,-77.0364,IAD,UAL123,en-route

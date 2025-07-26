@@ -1,20 +1,15 @@
-// server.js
-
-// Import required modules
 const express = require("express");
 const fetch = require("node-fetch");
 const request = require("request");
 const cors = require("cors");
 require("dotenv").config();
+const { runQueries } = require('../server/database.js');
 
-// Set up Express app and port
 const app = express();
 const PORT = 8000;
 
-// Enable CORS for all routes
 app.use(cors());
 
-// Load environment variables
 const myFlightsAPIKey = process.env.flightsAPIKey;
 const nearbyAirportDistance = process.env.nearbyAirportDistance;
 const defaultAirportCode = process.env.defaultAirportCode;
@@ -22,28 +17,18 @@ const defaultAirportCode = process.env.defaultAirportCode;
 console.log("server.js(): myFlightsAPIKey:", myFlightsAPIKey);
 console.log("nearby airport distance:", nearbyAirportDistance);
 
-// API base URL
 const api_base = "https://airlabs.co/api/v9/";
 
-// --------------------
-// Test Route
-// --------------------
 app.get('/hello', async (req, res) => {
   console.log("Hello to You! API route has been called");
   res.send({ message: "Hello to You" });
 });
 
-// ---------------------------
-// Invalid Flights Route
-// ---------------------------
 app.get('/flights', async (req, res) => {
   console.error("/flights is an invalid route");
   res.send("/flights is an invalid route");
 });
 
-// ---------------------------
-// Get Flights by Airport Code
-// ---------------------------
 app.get('/flights/:airport_code', async (req, res) => {
   const scriptName = "server.js: /flights/:airport_code(): ";
   console.log("in " + scriptName);
@@ -64,18 +49,22 @@ app.get('/flights/:airport_code', async (req, res) => {
     const json = await fetch_response.json();
 
     console.log(json);
-    res.json(json);
+    res.json(json);  // ✅ send response to client before runQueries
+
+    // ✅ runQueries after response to avoid header conflict
+    runQueries(json).catch(err => {
+      console.error(scriptName + " Error in runQueries:", err.stack);
+    });
 
     console.log(`${scriptName} done with getFlights airport code: ${my_airport_code}`);
   } catch (error) {
     console.error(scriptName + " Error getting flights for airport:", error.stack);
-    res.status(500).send("Failed to fetch flight data.");
+    if (!res.headersSent) {
+      res.status(500).send("Failed to fetch flight data.");
+    }
   }
 });
 
-// -----------------------------
-// Get Nearby Airports by lat,lng
-// -----------------------------
 app.get('/nearbyAirports/:lat,:lng', async (req, res) => {
   const { lat, lng } = req.params;
   const scriptName = "server.js: /nearbyAirports/:lat,:lng: ";
@@ -93,9 +82,6 @@ app.get('/nearbyAirports/:lat,:lng', async (req, res) => {
   }
 });
 
-// -------------------------
-// Start Server
-// -------------------------
 app.listen(PORT, '0.0.0.0', function (error) {
   if (error) {
     console.error("Error while starting server", error.stack);
